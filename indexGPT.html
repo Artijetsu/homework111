@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Mini Platformer</title>
+<style>
+body{margin:0;background:#111;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif}
+#game{position:relative;width:800px;height:400px;background:#222;overflow:hidden;border:2px solid #555}
+.player{position:absolute;width:30px;height:30px;background:#4ade80}
+.platform{position:absolute;height:20px;background:#60a5fa}
+.goal{position:absolute;width:30px;height:30px;background:#facc15}
+#ui{position:absolute;top:5px;left:10px;color:#fff;font-size:14px}
+</style>
+</head>
+<body>
+<div id="game">
+<div id="ui">← → двигаться | ↑ прыгать</div>
+<div class="player" id="player"></div>
+<div class="goal" id="goal"></div>
+</div>
+<script>
+const game=document.getElementById('game')
+const player=document.getElementById('player')
+const goal=document.getElementById('goal')
+
+const platforms=[
+{x:0,y:380,w:800},
+{x:120,y:320,w:120},
+{x:300,y:260,w:120},
+{x:480,y:200,w:120},
+{x:660,y:140,w:100}
+]
+
+platforms.forEach(p=>{
+const el=document.createElement('div')
+el.className='platform'
+el.style.left=p.x+'px'
+el.style.top=p.y+'px'
+el.style.width=p.w+'px'
+game.appendChild(el)
+p.el=el
+})
+
+goal.style.left='730px'
+goal.style.top='110px'
+
+let x=20,y=340
+let vx=0,vy=0
+let onGround=false
+
+const keys={}
+addEventListener('keydown',e=>keys[e.key]=true)
+addEventListener('keyup',e=>keys[e.key]=false)
+
+function rects(a,b){
+return a.x<a.x+a.w&&a.x+a.w>b.x&&a.y<a.y+a.h&&a.y+a.h>b.y
+}
+
+function update(){
+
+if(keys['ArrowLeft'])vx=-3
+else if(keys['ArrowRight'])vx=3
+else vx=0
+
+if(keys['ArrowUp']&&onGround){vy=-9;onGround=false}
+
+vy+=0.4
+x+=vx
+y+=vy
+
+onGround=false
+
+platforms.forEach(p=>{
+const pr={x,y,w:30,h:30}
+const pl={x:p.x,y:p.y,w:p.w,h:20}
+
+if(pr.x<pl.x+pl.w&&pr.x+pr.w>pl.x&&pr.y<pl.y+pl.h&&pr.y+pr.h>pl.y){
+if(vy>0&&pr.y+pr.h-vy<=pl.y){
+y=pl.y-30
+vy=0
+onGround=true
+}
+}
+})
+
+if(x<0)x=0
+if(x>770)x=770
+
+const g={x:730,y:110,w:30,h:30}
+if(x<g.x+g.w&&x+30>g.x&&y<g.y+g.h&&y+30>g.y){
+alert('Победа!')
+x=20;y=340;vy=0
+}
+
+player.style.left=x+'px'
+player.style.top=y+'px'
+
+requestAnimationFrame(update)
+}
+
+update()
+</script>
+</body>
+</html>

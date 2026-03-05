@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Мини-платформер</title>
+<style>
+  body { margin:0; overflow:hidden; background:#222; font-family:Arial; }
+  #game { 
+    position:relative; 
+    width:800px; 
+    height:500px; 
+    margin:20px auto; 
+    background:linear-gradient(#87CEEB, #E0F7FA); 
+    border:2px solid #444; 
+    overflow:hidden;
+  }
+  #player {
+    position:absolute;
+    width:40px;
+    height:60px;
+    background:#e74c3c;
+    border-radius:8px 8px 0 0;
+    box-shadow:0 4px 0 #c0392b;
+  }
+  .platform {
+    position:absolute;
+    height:20px;
+    background:#27ae60;
+    border-radius:4px;
+    box-shadow:0 4px 0 #219653;
+  }
+  #score {
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:24px;
+    text-shadow:2px 2px 4px black;
+    z-index:10;
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div id="score">Счёт: 0</div>
+</div>
+
+<script>
+// --- НАСТРОЙКИ ---
+const game = document.getElementById('game');
+const player = document.createElement('div');
+player.id = 'player';
+game.appendChild(player);
+
+let x = 100, y = 300;
+let vx = 0, vy = 0;
+let score = 0;
+let onGround = false;
+
+const GRAVITY = 0.6;
+const JUMP = -13;
+const SPEED = 4;
+
+// Платформы (x, y, ширина)
+const platforms = [
+  {x:0,   y:460, w:800},   // пол
+  {x:180, y:360, w:140},
+  {x:380, y:280, w:160},
+  {x:100, y:200, w:120},
+  {x:520, y:140, w:180},
+  {x:280, y:60,  w:100}
+];
+
+platforms.forEach(p => {
+  const div = document.createElement('div');
+  div.className = 'platform';
+  div.style.left = p.x + 'px';
+  div.style.top  = p.y + 'px';
+  div.style.width = p.w + 'px';
+  game.appendChild(div);
+  p.elem = div;
+});
+
+// Управление
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup',   e => keys[e.key.toLowerCase()] = false);
+
+// Основной цикл
+function loop() {
+  // управление
+  vx = 0;
+  if (keys['a'] || keys['arrowleft']) vx = -SPEED;
+  if (keys['d'] || keys['arrowright']) vx = +SPEED;
+  if ((keys[' '] || keys['w'] || keys['arrowup']) && onGround) {
+    vy = JUMP;
+    onGround = false;
+  }
+
+  // физика
+  vy += GRAVITY;
+  x += vx;
+  y += vy;
+
+  // столкновения с платформами
+  onGround = false;
+  for (let p of platforms) {
+    if (
+      x + 40 > p.x &&
+      x < p.x + p.w &&
+      y + 60 > p.y &&
+      y + 60 < p.y + 30 &&    // проверяем только падение сверху
+      vy > 0
+    ) {
+      y = p.y - 60;
+      vy = 0;
+      onGround = true;
+    }
+  }
+
+  // границы экрана
+  if (x < 0) x = 0;
+  if (x > 760) x = 760;
+  if (y > 500) {
+    y = 300;
+    x = 100;
+    vy = 0;
+    score = 0;
+  }
+
+  // счёт (просто за время жизни)
+  if (onGround) score += 0.016; // ~60 fps
+
+  // отрисовка
+  player.style.left = x + 'px';
+  player.style.top  = y + 'px';
+  document.getElementById('score').textContent = `Счёт: ${Math.floor(score)}`;
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
